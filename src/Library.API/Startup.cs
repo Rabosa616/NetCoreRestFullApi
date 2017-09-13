@@ -35,6 +35,7 @@ namespace Library.API
             {
                 setupAction.ReturnHttpNotAcceptable = true;
                 setupAction.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+                setupAction.InputFormatters.Add(new XmlDataContractSerializerInputFormatter());
             });
 
             // register the DbContext on the container, getting the connection string from
@@ -44,7 +45,8 @@ namespace Library.API
             services.AddDbContext<LibraryContext>(o => o.UseSqlServer(connectionString));
 
             // register the repository
-            services.AddScoped<ILibraryRepository, LibraryRepository>();
+            //services.AddScoped<ILibraryRepository, LibraryRepository>();
+            services.AddSingleton<ILibraryRepository, InMemoryLibraryRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -74,11 +76,15 @@ namespace Library.API
             {
                 cfg.CreateMap<Entities.Author, Models.AuthorDto>()
                     .ForMember(dest => dest.Name, opt => opt.MapFrom(src =>
-                        $"{src.FirstName} {src.LastName}"))
+                    $"{src.FirstName} {src.LastName}"))
                     .ForMember(dest => dest.Age, opt => opt.MapFrom(src =>
-                        src.DateOfBirth.GetCurrentAge()));
+                    src.DateOfBirth.GetCurrentAge()));
 
                 cfg.CreateMap<Entities.Book, Models.BookDto>();
+                cfg.CreateMap<Models.AuthorForCreationDto, Author>();
+                cfg.CreateMap<Models.BookForCreationDto, Book>();
+                cfg.CreateMap<Models.BookForUpdateDto, Book>();
+                cfg.CreateMap<Book, Models.BookForUpdateDto>();
             });
 
 

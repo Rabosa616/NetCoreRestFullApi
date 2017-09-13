@@ -18,7 +18,7 @@
     "Library.API": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:5000",
+      "launchUrl": "http://localhost:6058/",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

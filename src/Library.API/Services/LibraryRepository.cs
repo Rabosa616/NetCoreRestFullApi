@@ -66,7 +66,10 @@ namespace Library.API.Services
 
         public IEnumerable<Author> GetAuthors()
         {
-            return _context.Authors.OrderBy(a => a.FirstName).ThenBy(a => a.LastName);
+            return _context.Authors
+                .OrderBy(a => a.FirstName)
+                .ThenBy(a => a.LastName)
+                .ToList();
         }
 
         public IEnumerable<Author> GetAuthors(IEnumerable<Guid> authorIds)
@@ -103,5 +106,5 @@ namespace Library.API.Services
         {
             return (_context.SaveChanges() >= 0);
         }
-    }
+    }    
 }
