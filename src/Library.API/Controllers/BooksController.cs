@@ -171,23 +171,37 @@ namespace Library.API.Controllers
             if (bookForAuthorFromRepository == null)
             {
                 BookForUpdateDto bookDto = new BookForUpdateDto();
-                patchDoc.ApplyTo(bookDto);
+                patchDoc.ApplyTo(bookDto, ModelState);
+
+                TryValidateModel(bookDto);
+
+                if (!ModelState.IsValid)
+                {
+                    return new UnprocessableEntityObjectResult(ModelState);
+                }
+
                 var bookToAdd = Mapper.Map<Book>(bookDto);
                 bookToAdd.Id = id;
 
                 _libraryRepository.AddBookForAuthor(authorId, bookToAdd);
                 if (!_libraryRepository.Save())
                 {
-                    throw new Exception($"Upserting book {id} for author {authorId} failed on save.");
+                    return new UnprocessableEntityObjectResult(ModelState);
+
                 }
                 var bookToReturn = Mapper.Map<BookDto>(bookToAdd);
                 return CreatedAtRoute("GetBookForAuthor", new { authorId = authorId, id = bookToReturn.Id }, bookToReturn);
             }
 
             BookForUpdateDto bookToPatch = Mapper.Map<BookForUpdateDto>(bookForAuthorFromRepository);
-            patchDoc.ApplyTo(bookToPatch);
+            patchDoc.ApplyTo(bookToPatch, ModelState);
 
-            //add validation
+            TryValidateModel(bookToPatch);
+
+            if (!ModelState.IsValid)
+            {
+                return new UnprocessableEntityObjectResult(ModelState);
+            }
 
             Mapper.Map(bookToPatch, bookForAuthorFromRepository);
             _libraryRepository.UpdateBookForAuthor(bookForAuthorFromRepository);
