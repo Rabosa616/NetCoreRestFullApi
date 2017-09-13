@@ -1,13 +1,12 @@
 ﻿using AutoMapper;
 using Library.API.Entities;
+using Library.API.Helpers;
+using Library.API.Interfaces;
 using Library.API.Models;
-using Library.API.Services;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Library.API.Controllers
 {
@@ -22,7 +21,7 @@ namespace Library.API.Controllers
         }
 
         [HttpGet()]
-        public IActionResult GetBooksForAuthor(Guid authorId)
+        public IActionResult GetBookForAuthor(Guid authorId)
         {
             if (!_libraryRepository.AuthorExists(authorId))
             {
@@ -54,8 +53,6 @@ namespace Library.API.Controllers
             return Ok(bookForAuthor);
         }
 
-
-
         [HttpPost]
         public IActionResult CreateBookForAuthor(Guid authorId, [FromBody] BookForCreationDto book)
         {
@@ -63,6 +60,12 @@ namespace Library.API.Controllers
             {
                 return BadRequest();
             }
+
+            if (!ModelState.IsValid)
+            {
+                return new UnprocessableEntityObjectResult(ModelState);
+            }
+
             if (!_libraryRepository.AuthorExists(authorId))
             {
                 return NotFound();
@@ -77,9 +80,8 @@ namespace Library.API.Controllers
 
             BookDto bookToReturn = Mapper.Map<BookDto>(bookEntity);
 
-            return CreatedAtRoute("GetBooksForAuthor", new { authorId = authorId, id = bookToReturn.Id }, bookToReturn);
+            return CreatedAtRoute("GetBookForAuthor", new { authorId = authorId, id = bookToReturn.Id }, bookToReturn);
         }
-
 
         [HttpDelete("{id}")]
         public IActionResult DeleteBookForAuthor(Guid authorId, Guid id)
@@ -117,6 +119,11 @@ namespace Library.API.Controllers
             if (!_libraryRepository.AuthorExists(authorId))
             {
                 return NotFound();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return new UnprocessableEntityObjectResult(ModelState);
             }
 
             var bookForAuthorFromRepository = _libraryRepository.GetBookForAuthor(authorId, id);

@@ -9,6 +9,9 @@ using Microsoft.EntityFrameworkCore;
 using Library.API.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
+using Library.API.Interfaces;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 namespace Library.API
 {
@@ -36,7 +39,7 @@ namespace Library.API
                 setupAction.ReturnHttpNotAcceptable = true;
                 setupAction.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
                 setupAction.InputFormatters.Add(new XmlDataContractSerializerInputFormatter());
-            });
+            }).AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Startup>());
 
             // register the DbContext on the container, getting the connection string from
             // appSettings (note: use this during development; in a production environment,

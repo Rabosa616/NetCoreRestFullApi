@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Library.API.Services
+namespace Library.API.Interfaces
 {
     public interface ILibraryRepository
     {
