@@ -15,6 +15,10 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics;
 using NLog.Extensions.Logging;
 using NLog.Web;
+using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Swashbuckle.AspNetCore.Swagger;
 
 namespace Library.API
 {
@@ -24,7 +28,7 @@ namespace Library.API
 
         public Startup(IHostingEnvironment env)
         {
-            var builder = new ConfigurationBuilder()
+            IConfigurationBuilder builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appSettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true)
@@ -48,12 +52,25 @@ namespace Library.API
             // register the DbContext on the container, getting the connection string from
             // appSettings (note: use this during development; in a production environment,
             // it's better to store the connection string in an environment variable)
-            var connectionString = Configuration["connectionStrings:libraryDBConnectionString"];
+            string connectionString = Configuration["connectionStrings:libraryDBConnectionString"];
             services.AddDbContext<LibraryContext>(o => o.UseSqlServer(connectionString));
 
             // register the repository
             //services.AddScoped<ILibraryRepository, LibraryRepository>();
             services.AddSingleton<ILibraryRepository, InMemoryLibraryRepository>();
+            services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
+            services.AddScoped<IUrlHelper, UrlHelper>(implementationFactory =>
+            {
+                ActionContext actionContext = implementationFactory.GetService<IActionContextAccessor>().ActionContext;
+                return new UrlHelper(actionContext);
+            });
+
+            services.AddTransient<IPropertyMappingService, PropertyMappingService>();
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Info { Title = "Library Api", Version = "v1" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -79,7 +96,7 @@ namespace Library.API
                         var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
                         if (exceptionHandlerFeature != null)
                         {
-                            var logger = loggerFactory.CreateLogger("Global exception logger");
+                            ILogger logger = loggerFactory.CreateLogger("Global exception logger");
                             logger.LogError(500, exceptionHandlerFeature.Error, exceptionHandlerFeature.Error.Message);
                         }
                         context.Response.StatusCode = 500;
@@ -88,6 +105,19 @@ namespace Library.API
                     });
                 });
             }
+
+            app.UseStaticFiles();
+            app.UseDefaultFiles();
+
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
+            {
+                c.RoutePrefix = "documents";
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Library Api v1");
+            });
 
             AutoMapper.Mapper.Initialize(cfg =>
             {

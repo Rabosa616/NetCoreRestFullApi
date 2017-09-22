@@ -1,4 +1,5 @@
 ﻿using Library.API.Entities;
+using Library.API.Helpers;
 using Library.API.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -217,12 +218,30 @@ namespace Library.API.Services
             return _authors.FirstOrDefault(a => a.Id == authorId);
         }
 
-        public IEnumerable<Author> GetAuthors()
+        public PageList<Author> GetAuthors(AuthorsResourceParameters authorsResourceParameters)
         {
-            return _authors
+            if (!string.IsNullOrEmpty(authorsResourceParameters.Genre))
+            {
+                string genre = authorsResourceParameters.Genre.Trim().ToLowerInvariant();
+                var collection = _authors.OrderBy(a => a.FirstName)
+                                         .OrderBy(a => a.LastName)
+                                         .Where(item => item.Genre.ToLowerInvariant() == genre).AsQueryable();
+                return PageList<Author>.Create(collection, authorsResourceParameters.PageNumber, authorsResourceParameters.PageSize);
+            }
+            if (!string.IsNullOrEmpty(authorsResourceParameters.SearchQuery))
+            {
+                string searchQuery = authorsResourceParameters.SearchQuery.Trim().ToLowerInvariant();
+                var collection = _authors.OrderBy(a => a.FirstName)
+                                         .OrderBy(a => a.LastName)
+                                         .Where(item => item.Genre.ToLowerInvariant().Contains(searchQuery) || 
+                                                        item.FirstName.ToLowerInvariant().Contains(searchQuery) || 
+                                                        item.LastName.ToLowerInvariant().Contains(searchQuery)).AsQueryable();
+                return PageList<Author>.Create(collection, authorsResourceParameters.PageNumber, authorsResourceParameters.PageSize);
+            }
+            var collectionBeforePaging = _authors
                 .OrderBy(a => a.FirstName)
-                .ThenBy(a => a.LastName)
-                .ToList();
+                .OrderBy(a => a.LastName);
+            return PageList<Author>.Create(collectionBeforePaging.AsQueryable(), authorsResourceParameters.PageNumber, authorsResourceParameters.PageSize);
         }
 
         public IEnumerable<Author> GetAuthors(IEnumerable<Guid> authorIds)
