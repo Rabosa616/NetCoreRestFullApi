@@ -18,6 +18,7 @@ using NLog.Web;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Newtonsoft.Json.Serialization;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace Library.API
@@ -47,7 +48,8 @@ namespace Library.API
                 setupAction.ReturnHttpNotAcceptable = true;
                 setupAction.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
                 setupAction.InputFormatters.Add(new XmlDataContractSerializerInputFormatter());
-            }).AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Startup>());
+            }).AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<Startup>())
+              .AddJsonOptions(options => options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver());
 
             // register the DbContext on the container, getting the connection string from
             // appSettings (note: use this during development; in a production environment,
